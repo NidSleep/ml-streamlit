@@ -8,9 +8,9 @@ import mplcursors  # Import mplcursors library
 
 # Title
 st.title('Birch Clustering Visualization')
-st.set_option('deprecation.showPyplotGlobalUse', False)
+
 # Sidebar for threshold selection
-threshold = st.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
+threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
 # Load the data from GitHub raw URL
 url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
@@ -27,16 +27,20 @@ cluster_labels = birch.fit_predict(df_casualty.iloc[:, :-1])  # Exclude Case ID 
 silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
 
 # Plot the clustering results
-scatter = plt.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
+fig, ax = plt.subplots()
+scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
 
 # Enable mplcursors
-mplcursors.cursor(scatter, hover=True).connect('add', lambda sel: sel.annotation.set_text(df_casualty.iloc[sel.target.index][-1]))
+mplcursors.cursor(scatter, hover=True).connect(
+    "add",
+    lambda sel: sel.annotation.set_text(df_casualty.iloc[sel.target.index][-1])
+)
 
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
-plt.title(f'Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
+plt.title(f'Birch Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
 plt.colorbar(label='Cluster')
-st.pyplot()
+st.pyplot(fig)
 
 # Display silhouette score
 st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
