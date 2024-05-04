@@ -13,7 +13,8 @@ threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.
 
 # Load the data from GitHub raw URL
 url = 'https://github.com/NidSleep/streamlit-example/blob/master/dataset_cleansed.csv'
-df = pd.read_csv(url)
+df = pd.read_csv(url, encoding='utf-8')
+
 
 # Selecting relevant columns and handling missing values
 df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed']]
