@@ -13,13 +13,13 @@ st.title('Birch Clustering Visualization')
 threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
 # Load the data from GitHub raw URL
-url = 'https://raw.githubusercontent.com/your_username/your_repository/main/dataset_cleansed.csv'
+url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
 df = pd.read_csv(url)
 
 # Selecting relevant columns and handling missing values
-df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'Case ID']]
+df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 df_coordinates.dropna(inplace=True)
-df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', '#S']]  # Include Case ID
+df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]  # Include Case ID
 
 # Calculate silhouette score
 birch = Birch(threshold=threshold, n_clusters=None)
