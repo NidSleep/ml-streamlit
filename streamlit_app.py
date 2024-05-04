@@ -1,40 +1,37 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+from sklearn.cluster import Birch
+from sklearn.metrics import silhouette_score
+import numpy as np
+import matplotlib.pyplot as plt
 
-"""
-# Welcome to Streamlit!
+# Title
+st.title('Birch Clustering Visualization')
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# Sidebar for threshold selection
+threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+# Load the data from GitHub raw URL
+url = 'https://raw.githubusercontent.com/your_username/your_repository/main/dataset_cleansed.csv'
+df = pd.read_csv(url)
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+# Selecting relevant columns and handling missing values
+df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed']]
+df_coordinates.dropna(inplace=True)
+df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed']]
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+# Calculate silhouette score
+birch = Birch(threshold=threshold, n_clusters=None)
+cluster_labels = birch.fit_predict(df_casualty)
+silhouette_score_value = silhouette_score(df_casualty, cluster_labels)
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+# Plot the clustering results
+plt.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
+plt.xlabel('Fatalities')
+plt.ylabel('Injured')
+plt.title(f'Birch Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
+plt.colorbar(label='Cluster')
+st.pyplot()
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
-
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+# Display silhouette score
+st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
