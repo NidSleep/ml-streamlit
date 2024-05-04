@@ -12,7 +12,7 @@ st.title('Birch Clustering Visualization')
 threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
 # Load the data from GitHub raw URL
-url = 'https://raw.githubusercontent.com/your_username/your_repository/main/dataset_cleansed.csv'
+url = 'https://github.com/NidSleep/streamlit-example/blob/master/dataset_cleansed.csv'
 df = pd.read_csv(url)
 
 # Selecting relevant columns and handling missing values
