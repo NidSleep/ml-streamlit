@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import mplcursors  # Import mplcursors library
 
 # Title
-st.title('Mass Shotting Case's Casualty Visualization')
+st.title('Mass Shotting Case''s Casualty Visualization')
 st.write("""
 You may adjust the parameter below, lets see how the clustering going
 
