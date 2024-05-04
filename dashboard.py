@@ -17,13 +17,13 @@ url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/datas
 df = pd.read_csv(url)
 
 # Create a copy of the DataFrame to avoid SettingWithCopyWarning
-df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'Case ID']].copy()
+df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']].copy()
 
 # Drop missing values from the copied DataFrame
 df_coordinates.dropna(inplace=True)
 
 # Selecting relevant columns
-df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'Case ID']]  # Include Case ID
+df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]  # Include Case ID
 
 # Calculate silhouette score
 birch = Birch(threshold=threshold, n_clusters=None)
