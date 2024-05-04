@@ -34,7 +34,7 @@ mplcursors.cursor(scatter, hover=True).connect('add', lambda sel: sel.annotation
 
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
-plt.title(f'Birch Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
+plt.title(f'Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
 plt.colorbar(label='Cluster')
 st.pyplot()
 
