@@ -8,7 +8,7 @@ import mplcursors  # Import mplcursors library
 
 # Title
 st.title('Birch Clustering Visualization')
-
+st.set_option('deprecation.showPyplotGlobalUse', False)
 # Sidebar for threshold selection
 threshold = st.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
