@@ -23,11 +23,11 @@ df_coordinates = df[['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total vi
 df_coordinates.dropna(inplace=True)
 
 # Selecting relevant columns
-df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]  # Include Case ID
+df_casualty = df_coordinates[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]  # Include S#
 
 # Calculate silhouette score
 birch = Birch(threshold=threshold, n_clusters=None)
-cluster_labels = birch.fit_predict(df_casualty.iloc[:, :-1])  # Exclude Case ID for clustering
+cluster_labels = birch.fit_predict(df_casualty.iloc[:, :-1])  # Exclude S# for clustering
 silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
 
 # Plot the clustering results
@@ -39,11 +39,10 @@ dummy = ax.scatter([], [], c=[], cmap='viridis')
 colorbar = plt.colorbar(dummy, ax=ax, label='Cluster')
 
 # Enable mplcursors
-@mplcursors.cursor(hover=True)
-def on_hover(sel):
-    index = sel.target.index
-    case_id = df_casualty.iloc[index]['S#']
-    sel.annotation.set_text(f'ID: {case_id}')
+mplcursors.cursor(scatter).connect(
+    "add",
+    lambda sel: sel.annotation.set_text(f'ID: {df_casualty.iloc[sel.target.index]["S#"]}')
+)
 
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
