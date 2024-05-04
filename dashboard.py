@@ -7,10 +7,14 @@ import matplotlib.pyplot as plt
 import mplcursors  # Import mplcursors library
 
 # Title
-st.title('Birch Clustering Visualization')
+st.title('Mass Shotting Case's Casualty Visualization')
+st.write("""
+You may adjust the parameter below, lets see how the clustering going
+
+""")
 
 # Sidebar for threshold selection
-threshold = st.sidebar.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
+threshold = st.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1)
 
 # Load the data from the provided URL
 url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
@@ -46,7 +50,7 @@ mplcursors.cursor(scatter).connect(
 
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
-plt.title(f'Birch Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
+plt.title(f'Birch Clustering(Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
 
 st.pyplot(fig)
 
