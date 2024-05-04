@@ -39,10 +39,11 @@ dummy = ax.scatter([], [], c=[], cmap='viridis')
 colorbar = plt.colorbar(dummy, ax=ax, label='Cluster')
 
 # Enable mplcursors
-mplcursors.cursor(scatter, hover=True).connect(
-    "add",
-    lambda sel: sel.annotation.set_text(df_casualty.iloc[sel.target.index][-1])
-)
+@mplcursors.cursor(hover=True)
+def on_hover(sel):
+    index = sel.target.index
+    case_id = df_casualty.iloc[index]['S#']
+    sel.annotation.set_text(f'ID: {case_id}')
 
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
