@@ -5,4 +5,5 @@ numpy
 matplotlib
 mplcursors
 fuzzy-c-means
-xlsxwriter
+xlsxwriter==1.4.4
+
