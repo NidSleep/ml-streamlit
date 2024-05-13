@@ -15,8 +15,8 @@ st.write("""
 
 # Model selection
 model_option = st.selectbox(
-    'Choose a clustering model',
-    ('K-Means', 't-SNE + K-Means', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
+    'Choose a visualization or clustering model',
+    ('K-Means', 't-SNE', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
     key='model_selection'
 )
 
@@ -39,46 +39,43 @@ df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 
 # Display interactive table
 st.dataframe(df_casualty)
 
-# Clustering
-def perform_clustering(data, model_option, n_clusters):
+# Clustering or dimensionality reduction
+def perform_model(data, model_option, n_clusters):
     if model_option == 'K-Means':
         model = KMeans(n_clusters=n_clusters)
-    elif model_option == 't-SNE + K-Means':
-        tsne = TSNE(n_components=2)
+        labels = model.fit_predict(data)
+    elif model_option == 't-SNE':
+        tsne = TSNE(n_components=2, random_state=0)
         transformed_data = tsne.fit_transform(data)
-        model = KMeans(n_clusters=n_clusters)
-        return model.fit_predict(transformed_data), model
+        plt.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
+        plt.title('t-SNE Visualization')
+        st.pyplot(plt)
+        return None, None  # No clustering, just visualization
     elif model_option == 'Fuzzy C-means':
         model = FCM(n_clusters=n_clusters)
         model.fit(np.array(data))
-        return model.u.argmax(axis=1), model
+        labels = model.u.argmax(axis=1)
     elif model_option == 'Birch':
         model = Birch(n_clusters=None)
+        labels = model.fit_predict(data)
     elif model_option == 'Affinity Propagation':
         model = AffinityPropagation(random_state=0)
-    return model.fit_predict(data), model
+        labels = model.fit_predict(data)
+    return labels, model
 
-cluster_labels, model = perform_clustering(df_casualty.iloc[:, :-1], model_option, n_clusters)
+labels, model = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters) if model_option != 't-SNE' else (None, None)
 
-# Calculate metrics
-silhouette_score_value = 'N/A for Fuzzy C-means' if model_option == 'Fuzzy C-means' else silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
-davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], cluster_labels)
+if labels is not None:
+    # Calculate metrics
+    silhouette_score_value = 'N/A for Fuzzy C-means' if model_option == 'Fuzzy C-means' else silhouette_score(df_casualty.iloc[:, :-1], labels)
+    davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], labels)
 
-# Plot
-fig, ax = plt.subplots()
-scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
-colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
-mplcursors.cursor(scatter).connect(
-    "add",
-    lambda sel: sel.annotation.set_text(f'ID: {df_casualty.iloc[sel.target.index]["S#"]}')
-)
-plt.xlabel('Fatalities')
-plt.ylabel('Injured')
-plt.title(f'Clustering with {model_option}')
-
-st.pyplot(fig)
-
-# Display metrics
-if silhouette_score_value != 'N/A for Fuzzy C-means':
-    st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
-st.write(f'Davies-Bouldin Score: {davies_bouldin_score_value:.2f}')
+    # Plot
+    fig, ax = plt.subplots()
+    scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=labels, cmap='viridis', alpha=0.5)
+    colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
+    plt.xlabel('Fatalities')
+    plt.ylabel('Injured')
+    plt.title(f'Clustering with {model_option}')
+    # Customize legend as per the example
+    legend = ax.legend(*scatter
