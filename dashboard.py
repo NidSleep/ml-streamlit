@@ -20,6 +20,11 @@ model_option = st.selectbox(
     key='model_selection'
 )
 
+# Conditional parameters based on model
+n_clusters = 3
+if model_option in ['K-Means', 'Fuzzy C-means']:
+    n_clusters = st.slider("Select the number of clusters:", min_value=2, max_value=10, value=3, key='n_clusters_slider')
+
 # Load data
 @st.cache
 def load_data(url):
@@ -31,17 +36,20 @@ url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/datas
 df = load_data(url)
 df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 
+# Display interactive table
+st.dataframe(df_casualty)
+
 # Clustering
-def perform_clustering(data, model_option):
+def perform_clustering(data, model_option, n_clusters):
     if model_option == 'K-Means':
-        model = KMeans(n_clusters=3)
+        model = KMeans(n_clusters=n_clusters)
     elif model_option == 't-SNE + K-Means':
         tsne = TSNE(n_components=2)
         transformed_data = tsne.fit_transform(data)
-        model = KMeans(n_clusters=3)
+        model = KMeans(n_clusters=n_clusters)
         return model.fit_predict(transformed_data), model
     elif model_option == 'Fuzzy C-means':
-        model = FCM(n_clusters=3)
+        model = FCM(n_clusters=n_clusters)
         model.fit(np.array(data))
         return model.u.argmax(axis=1), model
     elif model_option == 'Birch':
@@ -50,22 +58,16 @@ def perform_clustering(data, model_option):
         model = AffinityPropagation(random_state=0)
     return model.fit_predict(data), model
 
-cluster_labels, model = perform_clustering(df_casualty.iloc[:, :-1], model_option)
+cluster_labels, model = perform_clustering(df_casualty.iloc[:, :-1], model_option, n_clusters)
 
 # Calculate metrics
-if model_option == 'Fuzzy C-means':
-    silhouette_score_value = 'N/A for Fuzzy C-means'
-else:
-    silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
-
+silhouette_score_value = 'N/A for Fuzzy C-means' if model_option == 'Fuzzy C-means' else silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
 davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], cluster_labels)
 
 # Plot
 fig, ax = plt.subplots()
 scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
 colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
-
-# mplcursors for hover info
 mplcursors.cursor(scatter).connect(
     "add",
     lambda sel: sel.annotation.set_text(f'ID: {df_casualty.iloc[sel.target.index]["S#"]}')
@@ -79,7 +81,4 @@ st.pyplot(fig)
 # Display metrics
 if silhouette_score_value != 'N/A for Fuzzy C-means':
     st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
-else:
-    st.write(f'Silhouette Score: {silhouette_score_value}')
-
 st.write(f'Davies-Bouldin Score: {davies_bouldin_score_value:.2f}')
