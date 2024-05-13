@@ -9,67 +9,36 @@ import mplcursors
 from fcmeans import FCM
 import io
 
-st.title("Interactive Data Analysis and Clustering")
+st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
-### Upload your data and adjust the parameters below to see how clustering changes with different algorithms.
+### Adjust the parameters below to see how clustering changes with different algorithms.
 """)
 
-# File uploader
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    # Assuming the dataframe `df` contains the necessary columns
-    df_casualty = df.dropna(subset=['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed'])
-    st.write("### Uploaded Data")
-    st.dataframe(df_casualty)
-    st.write("### Descriptive Statistics")
-    st.write(df_casualty.describe())
+# Model selection
+model_option = st.selectbox(
+    'Choose a visualization or clustering model',
+    ('K-Means', 't-SNE', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
+    key='model_selection'
+)
 
-    # Model selection
-    model_option = st.selectbox(
-        'Choose a visualization or clustering model',
-        ('K-Means', 't-SNE', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
-        key='model_selection'
-    )
+# Conditional parameters based on model
+n_clusters = 3
+if model_option in ['K-Means', 'Fuzzy C-means']:
+    n_clusters = st.slider("Select the number of clusters:", min_value=2, max_value=10, value=3, key='n_clusters_slider')
 
-    # Conditional parameters based on model
-    n_clusters = 3
-    if model_option in ['K-Means', 'Fuzzy C-means', 'Birch']:
-        n_clusters = st.slider("Select the number of clusters:", min_value=2, max_value=10, value=3, key='n_clusters_slider')
+# Load data
+@st.cache
+def load_data(url):
+    df = pd.read_csv(url)
+    df.dropna(subset=['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed'], inplace=True)
+    return df
 
-    # Clustering operation
-    labels = None
-    if model_option == 'K-Means':
-        model = KMeans(n_clusters=n_clusters)
-        labels = model.fit_predict(df_casualty[['Fatalities', 'Injured']])
-    elif model_option == 't-SNE':
-        tsne = TSNE(n_components=2)
-        transformed_data = tsne.fit_transform(df_casualty[['Fatalities', 'Injured']])
-        fig, ax = plt.subplots()
-        ax.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
-        plt.title('t-SNE Visualization')
-        st.pyplot(fig)
-    elif model_option == 'Fuzzy C-means':
-        model = FCM(n_clusters=n_clusters)
-        model.fit(np.array(df_casualty[['Fatalities', 'Injured']]))
-        labels = model.u.argmax(axis=1)
-    elif model_option == 'Birch':
-        model = Birch(n_clusters=n_clusters)
-        labels = model.fit_predict(df_casualty[['Fatalities', 'Injured']])
-    elif model_option == 'Affinity Propagation':
-        model = AffinityPropagation()
-        labels = model.fit_predict(df_casualty[['Fatalities', 'Injured']])
+url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
+df = load_data(url)
+df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 
-    if labels is not None:
-        df_casualty['Cluster'] = labels
-        fig, ax = plt.subplots()
-        scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=labels, cmap='viridis', alpha=0.5)
-        plt.colorbar(scatter, ax=ax, label='Cluster')
-        plt.xlabel('Fatalities')
-        plt.ylabel('Injured')
-        plt.title(f'Clustering with {model_option}')
-        st.pyplot(fig)
-
+# Display interactive table
+st.dataframe(df_casualty)
 
 # Clustering or dimensionality reduction
 def perform_model(data, model_option, n_clusters):
