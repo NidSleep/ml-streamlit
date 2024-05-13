@@ -1,56 +1,81 @@
 import streamlit as st
 import pandas as pd
-from sklearn.cluster import Birch
-from sklearn.metrics import silhouette_score
+import numpy as np
 import matplotlib.pyplot as plt
-import mplcursors  # Import mplcursors library
+from sklearn.cluster import KMeans, Birch, AffinityPropagation
+from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
+from fcmeans import FCM
+import mplcursors
 
-# Title
 st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
-### Adjust the parameter below to see how the clustering changes.
+### Adjust the parameters below to see how clustering changes with different algorithms.
 """)
 
-# Sidebar for threshold selection
-threshold = st.slider('Threshold', min_value=0.1, max_value=0.5, step=0.1, value=0.1, key='threshold_slider')
+# Model selection
+model_option = st.selectbox(
+    'Choose a clustering model',
+    ('K-Means', 't-SNE + K-Means', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
+    key='model_selection'
+)
 
+# Load data
 @st.cache
 def load_data(url):
     df = pd.read_csv(url)
     df.dropna(subset=['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed'], inplace=True)
     return df
 
-# Load the data from the provided URL
 url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
 df = load_data(url)
-
-# Selecting relevant columns
 df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 
-# Calculate silhouette score
-birch = Birch(threshold=threshold, n_clusters=None)
-cluster_labels = birch.fit_predict(df_casualty.iloc[:, :-1])  # Exclude S# for clustering
-silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
+# Clustering
+def perform_clustering(data, model_option):
+    if model_option == 'K-Means':
+        model = KMeans(n_clusters=3)
+    elif model_option == 't-SNE + K-Means':
+        tsne = TSNE(n_components=2)
+        transformed_data = tsne.fit_transform(data)
+        model = KMeans(n_clusters=3)
+        return model.fit_predict(transformed_data), model
+    elif model_option == 'Fuzzy C-means':
+        model = FCM(n_clusters=3)
+        model.fit(np.array(data))
+        return model.u.argmax(axis=1), model
+    elif model_option == 'Birch':
+        model = Birch(n_clusters=None)
+    elif model_option == 'Affinity Propagation':
+        model = AffinityPropagation(random_state=0)
+    return model.fit_predict(data), model
 
-# Plot the clustering results
+cluster_labels, model = perform_clustering(df_casualty.iloc[:, :-1], model_option)
+
+# Calculate silhouette score if applicable
+if model_option != 'Fuzzy C-means':  # Fuzzy C-means uses a different method to calculate the silhouette score
+    silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
+else:
+    silhouette_score_value = 'N/A (Fuzzy)'
+
+# Plot
 fig, ax = plt.subplots()
 scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=cluster_labels, cmap='viridis', alpha=0.5)
+colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
 
-# Create a dummy scatter plot for colorbar creation
-dummy = ax.scatter([], [], c=[], cmap='viridis')
-colorbar = plt.colorbar(dummy, ax=ax, label='Cluster')
-
-# Enable mplcursors
+# mplcursors for hover info
 mplcursors.cursor(scatter).connect(
     "add",
     lambda sel: sel.annotation.set_text(f'ID: {df_casualty.iloc[sel.target.index]["S#"]}')
 )
-
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
-plt.title(f'Birch Clustering (Threshold={threshold}, Silhouette Score={silhouette_score_value:.2f})')
+plt.title(f'Clustering with {model_option} (Silhouette Score: {silhouette_score_value})')
 
 st.pyplot(fig)
 
-# Display silhouette score
-st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
+# Display silhouette score if calculated
+if silhouette_score_value != 'N/A (Fuzzy)':
+    st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
+else:
+    st.write(f'Silhouette Score: {silhouette_score_value}')
