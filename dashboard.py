@@ -48,9 +48,7 @@ def perform_model(data, model_option, n_clusters):
     elif model_option == 't-SNE':
         tsne = TSNE(n_components=2, random_state=0)
         transformed_data = tsne.fit_transform(data)
-        plt.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
-        plt.title('t-SNE Visualization')
-        st.pyplot(plt)
+        return transformed_data, None  # Return transformed data for plotting
     elif model_option == 'Fuzzy C-means':
         model = FCM(n_clusters=n_clusters)
         model.fit(np.array(data))
