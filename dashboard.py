@@ -62,7 +62,17 @@ def perform_model(data, model_option, n_clusters):
     return labels, model
 
 labels, model = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters) if model_option != 't-SNE' else (None, None)
-
+if model_option == 't-SNE':
+    transformed_data, _ = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters)
+    if transformed_data is not None:
+        fig, ax = plt.subplots()
+        ax.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
+        plt.title('t-SNE Visualization')
+        st.pyplot(fig)  # Ensure plotting is handled correctly in the Streamlit workflow
+else:
+    # Handling for other clustering models remains the same.
+    pass
+    
 if labels is not None:
     df_casualty['Cluster'] = labels  # Add cluster labels to the DataFrame
     # Calculate metrics
