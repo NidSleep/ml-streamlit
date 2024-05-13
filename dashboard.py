@@ -74,7 +74,6 @@ if labels is not None:
     # Plot
     fig, ax = plt.subplots()
     scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=labels, cmap='viridis', alpha=0.5)
-    colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
     plt.xlabel('Fatalities')
     plt.ylabel('Injured')
     plt.title(f'Clustering with {model_option}')
