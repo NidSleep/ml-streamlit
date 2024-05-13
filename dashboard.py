@@ -7,6 +7,7 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 import mplcursors
 from fcmeans import FCM
+import io
 
 st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
@@ -66,6 +67,7 @@ def perform_model(data, model_option, n_clusters):
 labels, model = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters) if model_option != 't-SNE' else (None, None)
 
 if labels is not None:
+    df_casualty['Cluster'] = labels  # Add cluster labels to the DataFrame
     # Calculate metrics
     silhouette_score_value = 'N/A for Fuzzy C-means' if model_option == 'Fuzzy C-means' else silhouette_score(df_casualty.iloc[:, :-1], labels)
     davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], labels)
@@ -78,4 +80,24 @@ if labels is not None:
     plt.ylabel('Injured')
     plt.title(f'Clustering with {model_option}')
     # Customize legend as per the example
-    legend = ax.legend(*scatter
+    legend = ax.legend(*scatter.legend_elements(), title="Clusters")
+    ax.add_artist(legend)
+    st.pyplot(fig)
+
+    # Display metrics
+    if silhouette_score_value != 'N/A for Fuzzy C-means':
+        st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
+    st.write(f'Davies-Bouldin Score: {davies_bouldin_score_value:.2f}')
+
+    # Function to convert DataFrame to CSV for download
+    @st.cache
+    def convert_df_to_csv(df):
+        return df.to_csv().encode('utf-8')
+
+    csv = convert_df_to_csv(df_casualty)  # Convert DataFrame to CSV
+    st.download_button(
+        label="Download data as CSV",
+        data=csv,
+        file_name='clustered_data.csv',
+        mime='text/csv',
+    )
