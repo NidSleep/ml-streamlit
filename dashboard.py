@@ -7,15 +7,16 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 import mplcursors
 from fcmeans import FCM
+from io import BytesIO
 
 st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
-### Adjust the parameters below to see how clustering changes with different algorithms.
+### Adjust the parameters below to see how clustering changes with different algorithms, and export the results.
 """)
 
 # Model selection
 model_option = st.selectbox(
-    'Choose a visualization or clustering model',
+    'Choose a clustering model',
     ('K-Means', 't-SNE', 'Fuzzy C-means', 'Birch', 'Affinity Propagation'),
     key='model_selection'
 )
@@ -36,9 +37,6 @@ url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/datas
 df = load_data(url)
 df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 
-# Display interactive table
-st.dataframe(df_casualty)
-
 # Clustering or dimensionality reduction
 def perform_model(data, model_option, n_clusters):
     if model_option == 'K-Means':
@@ -47,10 +45,8 @@ def perform_model(data, model_option, n_clusters):
     elif model_option == 't-SNE':
         tsne = TSNE(n_components=2, random_state=0)
         transformed_data = tsne.fit_transform(data)
-        plt.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
-        plt.title('t-SNE Visualization')
-        st.pyplot(plt)
-        return None, None  # No clustering, just visualization
+        st.pyplot(plt.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5))
+        return None  # No clustering, just visualization
     elif model_option == 'Fuzzy C-means':
         model = FCM(n_clusters=n_clusters)
         model.fit(np.array(data))
@@ -61,21 +57,26 @@ def perform_model(data, model_option, n_clusters):
     elif model_option == 'Affinity Propagation':
         model = AffinityPropagation(random_state=0)
         labels = model.fit_predict(data)
-    return labels, model
+    return labels
 
-labels, model = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters) if model_option != 't-SNE' else (None, None)
+labels = perform_model(df_casualty.iloc[:, :-1], model_option, n_clusters) if model_option != 't-SNE' else None
 
+# Update DataFrame with clusters
 if labels is not None:
-    # Calculate metrics
-    silhouette_score_value = 'N/A for Fuzzy C-means' if model_option == 'Fuzzy C-means' else silhouette_score(df_casualty.iloc[:, :-1], labels)
-    davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], labels)
+    df_casualty['Cluster'] = labels
+    # Allow users to download the updated DataFrame
+    def to_excel(df):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Sheet1')
+            writer.save()
+        processed_data = output.getvalue()
+        return processed_data
 
-    # Plot
-    fig, ax = plt.subplots()
-    scatter = ax.scatter(df_casualty['Fatalities'], df_casualty['Injured'], c=labels, cmap='viridis', alpha=0.5)
-    colorbar = plt.colorbar(scatter, ax=ax, label='Cluster')
-    plt.xlabel('Fatalities')
-    plt.ylabel('Injured')
-    plt.title(f'Clustering with {model_option}')
-    # Customize legend as per the example
-    legend = ax.legend(*scatter
+    st.download_button(label='📥 Download Excel',
+                       data=to_excel(df_casualty),
+                       file_name='clustered_data.xlsx',
+                       mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+# Display DataFrame with clusters in UI
+st.dataframe(df_casualty)
