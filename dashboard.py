@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans, Birch, AffinityPropagation
 from sklearn.manifold import TSNE
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 import mplcursors
-from fuzzy-c-means import FCM
+from fcmeans import FCM
 from io import BytesIO
 
 st.title("Mass Shooting Case's Casualty Visualization")
