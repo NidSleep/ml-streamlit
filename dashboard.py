@@ -13,7 +13,7 @@ st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
 ### Adjust the parameters below to see how clustering changes with different algorithms.
 """)
-
+url = st.file_uploader("Choose a CSV file", type="csv")
 # Model selection
 model_option = st.selectbox(
     'Choose a visualization or clustering model',
@@ -33,7 +33,7 @@ def load_data(url):
     df.dropna(subset=['Longitude', 'Latitude', 'Fatalities', 'Injured', 'Total victims', 'Policeman Killed'], inplace=True)
     return df
 
-url = 'https://raw.githubusercontent.com/NidSleep/streamlit-example/master/dataset_cleansed.csv'
+
 df = load_data(url)
 df_casualty = df[['Fatalities', 'Injured', 'Total victims', 'Policeman Killed', 'S#']]
 
