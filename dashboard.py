@@ -51,7 +51,6 @@ def perform_model(data, model_option, n_clusters):
         plt.scatter(transformed_data[:, 0], transformed_data[:, 1], alpha=0.5)
         plt.title('t-SNE Visualization')
         st.pyplot(plt)
-        return None, None  # No clustering, just visualization
     elif model_option == 'Fuzzy C-means':
         model = FCM(n_clusters=n_clusters)
         model.fit(np.array(data))
