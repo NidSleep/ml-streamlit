@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, Birch, AffinityPropagation
 from sklearn.manifold import TSNE
-from sklearn.metrics import silhouette_score
-from fcmeans import FCM
+from sklearn.metrics import silhouette_score, davies_bouldin_score
 import mplcursors
+from fcmeans import FCM
 
 st.title("Mass Shooting Case's Casualty Visualization")
 st.write("""
@@ -52,11 +52,13 @@ def perform_clustering(data, model_option):
 
 cluster_labels, model = perform_clustering(df_casualty.iloc[:, :-1], model_option)
 
-# Calculate silhouette score if applicable
-if model_option != 'Fuzzy C-means':  # Fuzzy C-means uses a different method to calculate the silhouette score
-    silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
+# Calculate metrics
+if model_option == 'Fuzzy C-means':
+    silhouette_score_value = 'N/A for Fuzzy C-means'
 else:
-    silhouette_score_value = 'N/A (Fuzzy)'
+    silhouette_score_value = silhouette_score(df_casualty.iloc[:, :-1], cluster_labels)
+
+davies_bouldin_score_value = davies_bouldin_score(df_casualty.iloc[:, :-1], cluster_labels)
 
 # Plot
 fig, ax = plt.subplots()
@@ -70,12 +72,14 @@ mplcursors.cursor(scatter).connect(
 )
 plt.xlabel('Fatalities')
 plt.ylabel('Injured')
-plt.title(f'Clustering with {model_option} (Silhouette Score: {silhouette_score_value})')
+plt.title(f'Clustering with {model_option}')
 
 st.pyplot(fig)
 
-# Display silhouette score if calculated
-if silhouette_score_value != 'N/A (Fuzzy)':
+# Display metrics
+if silhouette_score_value != 'N/A for Fuzzy C-means':
     st.write(f'Silhouette Score: {silhouette_score_value:.2f}')
 else:
     st.write(f'Silhouette Score: {silhouette_score_value}')
+
+st.write(f'Davies-Bouldin Score: {davies_bouldin_score_value:.2f}')
